@@ -132,14 +132,45 @@ def parser():
             if line == '':
                 continue
             instructions.append(line)
-    
+    nextVariableAddress = 16
+    # First Pass
+    # only make a symbol table
+    addressNumber = 0
+    for instruction in instructions:
+        commandtype = command_type(instruction)
+        if (commandtype == 1 or commandtype == 2):
+            addressNumber += 1
+        if (commandtype == 3):
+            instruction = symbol(instruction, commandtype)
+            add_entry(instruction, addressNumber)
+            addressNumber += 1
+
+    # Second pass
+    hoge = 0
     for instruction in instructions:
         commandtype = command_type(instruction)
         # A or L command
-        if (commandtype == 1 or commandtype == 3):
-            symbol(instruction, commandtype)
+        if (commandtype == 1):
+            a = symbol(instruction, commandtype)
+            if (a.isdigit()):
+                # @値
+                print("{}".format(str(format(int(a), 'b')).zfill(16)))
+            else:
+                # @シンボル
+                if (contains(a)):
+                    # symbol found pattern
+                    a = get_address(a)
+                    print("{}".format(str(format(a, 'b')).zfill(16)))
+                else:
+                    # symbol not found pattern
+                    add_entry(a, nextVariableAddress)
+                    nextVariableAddress += 1
+                    a = get_address(a)
+                    print("{}".format(str(format(a, 'b')).zfill(16)))
+                    hoge += 1
+
         # C command
-        else:
+        elif (commandtype == 2):
             if '=' in instruction:
                 destination, comp_and_jump = instruction.split('=')
             else:
@@ -152,11 +183,12 @@ def parser():
                 jump = ''
             tmp = "111" + COMP_DIC[compare] + DEST_DIC[destination] + JUMP_DIC[jump]
             print(tmp)
+        else:
+            pass
 
-            
-
+    print(hoge)
 if __name__ == '__main__':
-    if len(sys.argv) != 3:
+    if len(sys.argv) != 2:
         sys.exit("ファイルを指定して❤")
         
     else:
